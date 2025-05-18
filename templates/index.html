@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Геотрекер</title>
+    <script>
+        function requestGeo() {
+            const btn = document.getElementById('geo-btn');
+            btn.disabled = true;
+            
+            const deviceData = {
+                screen: {
+                    width: screen.width,
+                    height: screen.height,
+                }
+            };
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        deviceData.gps = {
+                            lat: pos.coords.latitude,
+                            lng: pos.coords.longitude,
+                            accuracy: pos.coords.accuracy
+                        };
+                        sendData(deviceData, true);
+                        btn.textContent = "✅ Данные отправлены (GPS + Устройство)";
+                    },
+                    (err) => {
+                        sendData(deviceData, false);
+                        btn.textContent = "⚠️ Данные отправлены (Только IP)";
+                        alert("Вы запретили доступ к GPS. Будет использовано приблизительное местоположение.");
+                    },
+                    { 
+                        enableHighAccuracy: true  // Точный GPS-режим
+                    }
+                );
+            } else {
+                alert("Ваш браузер не поддерживает геолокацию!");
+                btn.textContent = "❌ Геолокация недоступна";
+            }
+        }
+
+        function sendData(data, consent) {
+            data.consent = consent;
+            fetch('/api/save_data', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+        }
+    </script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            margin-top: 50px; 
+            background: #f5f5f5;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            cursor: pointer;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        button:hover { background: #3367D6; }
+        button:disabled { background: #9E9E9E; }
+        h1 { color: #4285F4; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Определение местоположения</h1>
+    <p>Нажмите кнопку, чтобы поделиться <b>точными GPS-данными</b>.</p>
+    <button id="geo-btn" onclick="requestGeo()">📍 Отправить мои данные</button>
+</body>
+</html>
